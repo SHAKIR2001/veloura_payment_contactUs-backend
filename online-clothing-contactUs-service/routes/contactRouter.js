@@ -1,5 +1,6 @@
 import express from "express";
 import { createContactMessage, getAllContactMessages, resolveContactMessage  } from "../controllers/contactController.js";
+import { verifyAdmin } from "../middleware/authMiddleware.js";
 
 const contactRouter = express.Router();
 
