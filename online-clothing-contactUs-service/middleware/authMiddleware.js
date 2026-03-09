@@ -1,5 +1,25 @@
 import jwt from "jsonwebtoken";
 
+const resolveJwtConfig = () => {
+    const publicKey = (process.env.JWT_PUBLIC_KEY || "").replace(/\\n/g, "\n");
+    if (publicKey) {
+        return { algorithm: "RS256", publicKey };
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (secret) {
+        return { algorithm: "HS256", secret };
+    }
+
+    throw new Error("JWT configuration missing. Set JWT_PUBLIC_KEY or JWT_SECRET.");
+};
+
+const isAdmin = (decoded) => {
+    if (decoded?.role === "admin") return true;
+    if (Array.isArray(decoded?.roles) && decoded.roles.includes("shop_owner")) return true;
+    return false;
+};
+
 export function verifyAdmin(req, res, next) {
     const authHeader = req.headers["authorization"];
 
@@ -10,13 +30,15 @@ export function verifyAdmin(req, res, next) {
     const token = authHeader.split(" ")[1];
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const { algorithm, publicKey, secret } = resolveJwtConfig();
+        const verificationKey = algorithm === "RS256" ? publicKey : secret;
+        const decoded = jwt.verify(token, verificationKey, { algorithms: [algorithm] });
 
-        if (decoded.role !== "admin") {
+        if (!isAdmin(decoded)) {
             return res.status(403).json({ message: "Access denied. Admins only." });
         }
 
-        req.user = decoded; // attach user info to request if needed
+        req.user = decoded;
         next();
     } catch (e) {
         return res.status(401).json({ message: "Invalid or expired token" });
