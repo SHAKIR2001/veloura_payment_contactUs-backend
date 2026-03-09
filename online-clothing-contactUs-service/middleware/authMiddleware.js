@@ -15,7 +15,7 @@ const resolveJwtConfig = () => {
 };
 
 const isAdmin = (decoded) => {
-    if (decoded?.role === "admin") return true;
+    if (decoded?.role === "shop_owner") return true;
     if (Array.isArray(decoded?.roles) && decoded.roles.includes("shop_owner")) return true;
     return false;
 };
