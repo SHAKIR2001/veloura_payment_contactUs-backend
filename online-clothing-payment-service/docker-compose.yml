@@ -5,7 +5,8 @@ services:
       dockerfile: Dockerfile
     container_name: online-clothing-payment-service
     ports:
-      - "5003:5003"
+      # Host port can be changed if 5003 is already used on your PC.
+      - "${PAYMENT_HOST_PORT:-5004}:5003"
     env_file:
       - .env
     environment:
