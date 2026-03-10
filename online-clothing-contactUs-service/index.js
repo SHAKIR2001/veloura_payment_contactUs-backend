@@ -11,7 +11,11 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-let mongoUrl = process.env.MONGO_URL;
+const mongoUrl = process.env.MONGO_URL;
+if (!mongoUrl) {
+    throw new Error("MONGO_URL is missing. Set it in your environment (.env)");
+}
+
 mongoose.connect(mongoUrl);
 
 let connection =  mongoose.connection
@@ -21,6 +25,7 @@ connection.once("open", ()=>{
 
 app.use("/api/contact", contactRouter)
 
-app.listen(3002,()=>{
-    console.log("Server is running on PORT 3002 🚀")
+const port = Number(process.env.PORT || 3002);
+app.listen(port,()=>{
+    console.log(`Server is running on PORT ${port} 🚀`)
 });

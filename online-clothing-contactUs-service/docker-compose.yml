@@ -1,0 +1,27 @@
+services:
+  contactus-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: online-clothing-contactus-service
+    ports:
+      - "3002:3002"
+    env_file:
+      - .env
+    environment:
+      - PORT=3002
+      # For local Docker Mongo (recommended while developing):
+      - MONGO_URL=mongodb://mongo:27017/contactus
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7
+    container_name: contactus-service-mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - contactus-mongo-data:/data/db
+
+volumes:
+  contactus-mongo-data:

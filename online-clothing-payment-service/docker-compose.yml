@@ -1,0 +1,15 @@
+services:
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: online-clothing-payment-service
+    ports:
+      - "5003:5003"
+    env_file:
+      - .env
+    environment:
+      - PORT=5003
+      - FRONTEND_URL=http://localhost:5173
+      - CORS_ORIGINS=http://localhost:5173
+      - STRIPE_CURRENCY=usd
