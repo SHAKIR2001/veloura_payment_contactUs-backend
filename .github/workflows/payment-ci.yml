@@ -1,0 +1,53 @@
+name: Payment Service CI
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "online-clothing-payment-service/**"
+      - ".github/workflows/payment-ci.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "online-clothing-payment-service/**"
+      - ".github/workflows/payment-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: payment-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Node CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: online-clothing-payment-service
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: online-clothing-payment-service/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build (if present)
+        run: npm run build --if-present
