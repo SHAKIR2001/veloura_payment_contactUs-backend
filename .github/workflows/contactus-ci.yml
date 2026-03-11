@@ -4,12 +4,12 @@ on:
   push:
     branches: [main, master]
     paths:
-      - "veloura_backend/online-clothing-contactUs-service/**"
+      - "online-clothing-contactUs-service/**"
       - ".github/workflows/contactus-ci.yml"
   pull_request:
     branches: [main, master]
     paths:
-      - "veloura_backend/online-clothing-contactUs-service/**"
+      - "online-clothing-contactUs-service/**"
       - ".github/workflows/contactus-ci.yml"
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: veloura_backend/online-clothing-contactUs-service
+        working-directory: online-clothing-contactUs-service
     strategy:
       fail-fast: false
       matrix:
@@ -40,7 +40,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: veloura_backend/online-clothing-contactUs-service/package-lock.json
+          cache-dependency-path: online-clothing-contactUs-service/package-lock.json
 
       - name: Install
         run: npm ci
