@@ -6,11 +6,11 @@ services:
     container_name: online-clothing-payment-service
     ports:
       # Host port can be changed if 5003 is already used on your PC.
-      - "${PAYMENT_HOST_PORT:-5004}:5003"
+      - "${PAYMENT_PORT:-5003}:5003"
     env_file:
       - .env
     environment:
       - PORT=5003
       - FRONTEND_URL=http://localhost:5173
-      - CORS_ORIGINS=http://localhost:5173
+      - CORS_ORIGINS=http://localhost,http://127.0.0.1
       - STRIPE_CURRENCY=usd

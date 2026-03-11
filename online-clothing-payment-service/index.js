@@ -9,18 +9,56 @@ const app = express();
 
 app.use(express.json({ limit: '1mb' }));
 
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173')
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost,http://127.0.0.1')
 	.split(',')
-	.map(s => s.trim())
+	.map((s) => s.trim().replace(/\/$/, ''))
 	.filter(Boolean);
+
+function isOriginAllowed(origin) {
+	if (!origin) return true;
+	if (allowedOrigins.includes('*')) return true;
+
+	let originUrl;
+	try {
+		originUrl = new URL(origin);
+	} catch {
+		return false;
+	}
+
+	for (const allowed of allowedOrigins) {
+		if (allowed === origin) return true;
+
+		let allowedUrl;
+		try {
+			allowedUrl = new URL(allowed);
+		} catch {
+			// Ignore invalid allowed entries.
+			continue;
+		}
+
+		// If allowed origin has no explicit port, allow any port on that host.
+		if (!allowedUrl.port) {
+			if (
+				allowedUrl.protocol === originUrl.protocol &&
+				allowedUrl.hostname === originUrl.hostname
+			) {
+				return true;
+			}
+			continue;
+		}
+
+		if (allowedUrl.origin === originUrl.origin) return true;
+	}
+
+	return false;
+}
 
 app.use(
 	cors({
 		origin(origin, cb) {
-			if (!origin) return cb(null, true);
-			if (allowedOrigins.includes('*')) return cb(null, true);
-			if (allowedOrigins.includes(origin)) return cb(null, true);
-			return cb(new Error(`CORS blocked for origin: ${origin}`));
+			if (isOriginAllowed(origin)) return cb(null, true);
+			// Don't throw an error (which becomes a 500 HTML response). Just deny CORS.
+			return cb(null, false);
 		},
 		credentials: true,
 	})
