@@ -1,0 +1,219 @@
+openapi: 3.0.3
+info:
+  title: Online Clothing Payment Service API
+  version: 1.0.0
+  description: Stripe checkout/session API for the online clothing platform.
+servers:
+  - url: https://veloura-payment-services.onrender.com
+  - url: http://localhost:5003
+
+tags:
+  - name: Health
+  - name: Payments
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/payments/stripe/create-checkout-session:
+    post:
+      tags: [Payments]
+      summary: Create a Stripe Checkout Session
+      description: |
+        Creates a Stripe Checkout Session for a one-time payment.
+        If `successUrl` or `cancelUrl` are not provided, the service will use `FRONTEND_URL` defaults.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCheckoutSessionRequest"
+      responses:
+        "200":
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateCheckoutSessionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/payments/stripe/session/{id}:
+    get:
+      tags: [Payments]
+      summary: Get a Stripe Checkout Session by ID
+      parameters:
+        - $ref: "#/components/parameters/StripeSessionIdParam"
+      responses:
+        "200":
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StripeSessionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  parameters:
+    StripeSessionIdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Stripe Checkout Session ID (e.g. `cs_test_...`).
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            missingItems:
+              summary: Items are required
+              value:
+                error: items[] is required
+            missingSessionId:
+              summary: Session id is required
+              value:
+                error: Session id is required
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            stripeNotConfigured:
+              summary: Stripe not configured
+              value:
+                error: STRIPE_SECRET_KEY is not configured
+            stripeFailure:
+              summary: Stripe error
+              value:
+                error: Failed to create checkout session
+
+  schemas:
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          example: ok
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+          description: Error message
+      required: [error]
+
+    CheckoutItem:
+      type: object
+      additionalProperties: false
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+        price:
+          type: number
+          minimum: 0.01
+          description: Unit price in major currency units (e.g. 12.99).
+          example: 19.99
+        productName:
+          type: string
+          description: Preferred display name for the product.
+          example: Classic T-Shirt
+        name:
+          type: string
+          description: Fallback display name (if `productName` is not provided).
+          example: T-Shirt
+        imageUrl:
+          type: string
+          format: uri
+          example: https://example.com/images/tshirt.png
+      required: [quantity, price]
+
+    CreateCheckoutSessionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/CheckoutItem"
+        successUrl:
+          type: string
+          format: uri
+          description: Optional override for Stripe success URL.
+          example: http://localhost:5173/order-details?session_id={CHECKOUT_SESSION_ID}
+        cancelUrl:
+          type: string
+          format: uri
+          description: Optional override for Stripe cancel URL.
+          example: http://localhost:5173/checkout?canceled=1
+      required: [items]
+
+    CreateCheckoutSessionResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: Stripe Checkout Session ID
+          example: cs_test_a1b2c3
+        url:
+          type: string
+          format: uri
+          description: Stripe-hosted checkout URL
+          example: https://checkout.stripe.com/c/pay/cs_test_a1b2c3
+      required: [id]
+
+    StripeSessionResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          example: cs_test_a1b2c3
+        payment_status:
+          type: string
+          description: Stripe payment status
+          example: paid
+        status:
+          type: string
+          description: Stripe session status
+          example: complete
+        amount_total:
+          type: integer
+          nullable: true
+          description: Total amount in the smallest currency unit (e.g. cents)
+          example: 3998
+        currency:
+          type: string
+          description: Currency code
+          example: usd
+      required: [id]
