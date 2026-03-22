@@ -13,4 +13,6 @@ services:
       - PORT=5003
       - FRONTEND_URL=http://localhost:5173
       - CORS_ORIGINS=http://localhost,http://127.0.0.1
+    #      - FRONTEND_URL=https://online-shop-frontend-alpha.vercel.app
+    #      - CORS_ORIGINS=https://online-shop-frontend-alpha.vercel.app
       - STRIPE_CURRENCY=usd
